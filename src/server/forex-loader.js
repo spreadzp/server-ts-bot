@@ -1,8 +1,10 @@
 var request = require('request');
-require('dotenv').config();
+import * as dotenv from 'dotenv';
+dotenv.config();
 const FOREX_API_KEY = 'bfBuXo30skEAA0ES4Wz3lNQksUjcTuce';
 module.exports = {
     getNewFiatPrice(fiatNames) {
+        console.log('process.env.FOREX_API_KEY :', process.env.FOREX_API_KEY);
         const pairs = fiatNames.toString();
         const urlForexPrices = `https://forex.1forge.com/1.0.3/quotes?pairs=${pairs}&api_key=${FOREX_API_KEY}`
         return this.requestToResource(urlForexPrices);

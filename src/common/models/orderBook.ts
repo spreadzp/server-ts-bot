@@ -5,5 +5,5 @@ export class OrderBook extends Document{
     readonly pair: string;
     readonly bid: number;
     readonly ask: number;
-    readonly time: string;
+    readonly time: number;
 }

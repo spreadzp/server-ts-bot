@@ -2,7 +2,7 @@
   "name": "server-bots",
   "version": "1.0.0",
   "description": "central-server",
-  "author": "karpus-paul",
+  "author": "spread2009@gmail.com",
   "license": "MIT",
   "scripts": {
     "format": "prettier --write \"**/*.ts\"",
@@ -25,6 +25,9 @@
     "@nestjs/websockets": "^5.0.0-beta.6",
     "@types/dotenv": "^4.0.3",
     "console.table": "^0.10.0",
+    "csv": "^3.1.0",
+    "csv-write-stream": "^2.0.0",
+    "csv-writer": "^1.0.0",
     "dotenv": "^6.0.0",
     "fastify-formbody": "^2.0.0",
     "i": "^0.3.6",
@@ -36,7 +39,8 @@
     "rxjs": "^6.0.0",
     "toa-net": "^1.5.4",
     "typescript": "^2.6.2",
-    "uniqid": "^5.0.3"
+    "uniqid": "^5.0.3",
+    "xlsx": "^0.13.1"
   },
   "devDependencies": {
     "@types/express": "^4.0.39",

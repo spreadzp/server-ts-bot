@@ -13,11 +13,17 @@ export class OrderBookService {
     return await createdOrderBook.save();
   }
 
-  async addNewData(data: OrderBook[]) {
-    await this.orderBookModel.insert(data);
+  async addNewData(data: OrderBook) {
+    const createdOrderBook = await new this.orderBookModel(data); 
+    await createdOrderBook.save();
   }
 
   async findAll(): Promise<OrderBook[]> {
     return await this.orderBookModel.find().exec();
+  }
+
+  async getOrderBookByPeriod(startDate: number, endDate: number): Promise<OrderBook[]> {
+    return await this.orderBookModel.find({time: { $gte: startDate,  $lt: endDate}},
+    {_id: 0, exchangeName: 1, pair: 1, bid: 1, ask: 1, time: 1}).exec();
   }
 }

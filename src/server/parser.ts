@@ -1,16 +1,13 @@
-import { OrderBook } from "common/models/orderBook";
-import { OrderBookService } from "db/orderBook/orderBook.service";
-import { setInterval } from "timers";
-
-require('dotenv').config();
+import { OrderBook } from './../common/models/orderBook';
+import { OrderBookService } from 'db/orderBook/orderBook.service';
+import { Component, Controller } from '@nestjs/common'; 
+import { IDataExchange } from './../common/models/dataExchange'; 
+import * as dotenv from 'dotenv';
+dotenv.config();
 const cTable = require('console.table');
 const emoji = require('node-emoji');
-const logger = require('./winston');
-const forexLoader = require('./forex-loader');
-const PERCENT_PROFIT = 0.1,
-    DEVIATION_PRICE = 0.1,
-    FOREX_API_KEY = 'bfBuXo30skEAA0ES4Wz3lNQksUjcTuce',
-    FOREX_PAIRS = 'EURUSD,GBPUSD,USDJPY';
+const logger = require('./winston')
+const forexLoader = require('./forex-loader'); 
 
 const orderBooks = {};
 let result;
@@ -20,13 +17,12 @@ let connectedExhanges;
 let currentBalance = 0;
 let currentVolume = 0;
 
+@Controller()
 export class Parser {
-
-    constructor(private readonly orderBooksService: OrderBookService) {
-    }
+    constructor(private readonly orderBooksService: OrderBookService) { }
     getForexPrices() {
         if (responseForexResource === undefined) {
-            const pair = FOREX_PAIRS.split(',');
+            const pair = process.env.FOREX_PAIRS.split(',');
             responseForexResource = forexLoader.getNewFiatPrice([pair]);
         } else {
             if (responseForexResource.responseContent !== undefined) {
@@ -83,13 +79,13 @@ export class Parser {
                         currentStatus: 4,
                         host: host,
                         port: port
-                    }
-                ]
+                    },
+                ];
             }
             if (bids && asks) {
                 for (let i = 0; i < orderBooks.orderBooksData.length; i++) {
-                    if (orderBooks.orderBooksData[i].exchange == exchangePair[0]
-                        && orderBooks.orderBooksData[i].pair == exchangePair[1]
+                    if (orderBooks.orderBooksData[i].exchange === exchangePair[0]
+                        && orderBooks.orderBooksData[i].pair === exchangePair[1]
                         && orderBook.bids !== undefined && orderBook.asks !== undefined) {
                         orderBooks.orderBooksData[i].pair = exchangePair[1];
                         orderBooks.orderBooksData[i].bids = bids;
@@ -97,7 +93,7 @@ export class Parser {
                         orderBooks.orderBooksData[i].currentStatus = 4;
                         host = host;
                         port = port;
-                        createdExchangeField = true
+                        createdExchangeField = true;
                     } else {
                         orderBooks.orderBooksData[i].currentStatus -= 1;
                     }
@@ -105,12 +101,12 @@ export class Parser {
             }
 
             if (!createdExchangeField && fiatPrices && exchangePair[1]) {
-                bids = (currentForexPair !== undefined) ? (currentForexPair === "USDJPY") ?
+                bids = (currentForexPair !== undefined) ? (currentForexPair === 'USDJPY') ?
                     [[+orderBook.bids[0][0] / +fiatPrices[currentForexPair][0], 0]] :
                     [[+orderBook.bids[0][0] * +fiatPrices[currentForexPair][0], 0]] :
                     orderBook.bids;
 
-                asks = (currentForexPair !== undefined) ? (currentForexPair === "USDJPY") ?
+                asks = (currentForexPair !== undefined) ? (currentForexPair === 'USDJPY') ?
                     [[+orderBook.asks[0][0] / +fiatPrices[currentForexPair][0], 0]] :
                     [[+orderBook.asks[0][0] * +fiatPrices[currentForexPair][0], 0]] :
                     orderBook.asks;
@@ -124,21 +120,23 @@ export class Parser {
                             currentStatus: 4,
                             host: host,
                             port: port
-                        }
-                    )
+                        },
+                    );
                 }
             }
         }
-
     }
     getPriceFiatForex(fiat) {
-        if (fiatPrices && fiat !== 'USD') {
+        if (fiatPrices) {
             const assetFiat = fiat.split('-');
-            const key = Object.keys(fiatPrices);
-            const searchFiat = key.find((element) => {
-                return element.includes(assetFiat[1]);
-            });
-            return searchFiat;
+            if (assetFiat[1] !== 'USD') {
+                const key = Object.keys(fiatPrices);
+                const searchFiat = key.find((element) => {
+                    return element.includes(assetFiat[1]);
+                });
+                console.log('fiat', fiat, searchFiat);
+                return searchFiat;
+            }
         }
     }
     getSocket(data) {
@@ -149,11 +147,17 @@ export class Parser {
     makeOrders() {
         if (orderBooks.orderBooksData) {
             const currentOrders = this.fetchOrders();
-            if (currentOrders) {
-                console.log('this.orderBooksService :', this.orderBooksService);
-                this.orderBooksService.addNewData(currentOrders);
+            for (const iterator of currentOrders) {
+                if (iterator.bid !== 0 && iterator.ask !== 0) {
+                    const newOrderBookData: OrderBook = {
+                        exchangeName: iterator.exchangeName, pair: iterator.pair,
+                        bid: iterator.bid, ask: iterator.ask, time: Date.now(),
+                    };
+                    this.orderBooksService.addNewData(newOrderBookData);
+                }
             }
             this.showData();
+
             return this.defineSellBuy(connectedExhanges);
         }
     }
@@ -167,11 +171,7 @@ export class Parser {
         console.log('');
         console.log('');
         console.log('=======================================================================');
-        result = orderBooks.orderBooksData.map(data => ({
-            exchange: data.exchange, pair: data.pair,
-            bid: data.bids[0][0], ask: data.asks[0][0], spread: ((data.asks[0][0] / data.bids[0][0]) - 1) * 100,
-            status: data.currentStatus > 0, host: data.host, port: data.port
-        }));
+        result = this.getCurrentPrice();
         connectedExhanges = result.filter(this.checkConnectedExchanges);
         const failExchangePrises = result.filter(this.isDisonnectedBot);
         if (failExchangePrises.length) {
@@ -183,13 +183,21 @@ export class Parser {
         console.log('');
         console.log(`@@@@@@@@@@  BALANCE = ${currentBalance}BTC VOLUME = ${currentVolume}`);
     }
+    getCurrentPrice(): IDataExchange {
+        return orderBooks.orderBooksData.map(data => ({
+            exchange: data.exchange, pair: data.pair,
+            bid: data.bids[0][0], ask: data.asks[0][0], spread: ((data.asks[0][0] / data.bids[0][0]) - 1) * 100,
+            status: data.currentStatus > 0, host: data.host, port: data.port, time: Date.now(),
+        }));
+    }
+
     defineStateBalance(data) {
         if (!fiatPrices) {
             this.getForexPrices();
         }
         if (fiatPrices) {
             const currentForexPair = this.getPriceFiatForex(data.pair);
-            const priceConfirmed = (currentForexPair !== undefined) ? (currentForexPair === "USDJPY") ?
+            const priceConfirmed = (currentForexPair !== undefined) ? (currentForexPair === 'USDJPY') ?
                 data.price / +fiatPrices[currentForexPair][0] :
                 data.price * +fiatPrices[currentForexPair][0] :
                 data.price;
@@ -210,8 +218,7 @@ export class Parser {
     }
     saveOrderToLog(data) {
         if (data) {
-            const executeOrder = `pair: ${data.pair}, exchange: ${data.exchange}, typeOrder: ${data.typeOrder}, arbitrageId: ${data.arbitrageId}, price: ${data.price}, volume: ${data.volume}, idOrderExchange: ${data.idOrderExcange}, fulfill: ${data.fulfill}`
-            //logger.log(`info`, `${executeOrder}`);
+            const executeOrder = `pair: ${data.pair}, exchange: ${data.exchange}, typeOrder: ${data.typeOrder}, arbitrageId: ${data.arbitrageId}, price: ${data.price}, volume: ${data.volume}, idOrderExchange: ${data.idOrderExcange}, fulfill: ${data.fulfill}`;
         }
 
     }
@@ -229,11 +236,10 @@ export class Parser {
             return data.ask === maxBuyPrise;
         }
         function findSellExchange(data) {
-
             return data.bid === minSellPrise;
         }
-        console.log(marketSpread, +PERCENT_PROFIT);
-        if (sellExchange && buyExchange && marketSpread > +PERCENT_PROFIT) {
+        console.log(marketSpread, +process.env.PERCENT_PROFIT);
+        if (sellExchange && buyExchange && marketSpread > +process.env.PERCENT_PROFIT) {
 
             console.log(`pair ${sellExchange.pair} Max Price: ${sellExchange.exchange}  ${minSellPrise}  Min Price: pair ${buyExchange.pair} ${buyExchange.exchange}  ${maxBuyPrise}  spread: ${marketSpread}%`);
 
@@ -253,7 +259,8 @@ export class Parser {
                 exchange: sellExchange.exchange,
                 price: sellPrice,
                 volume: 1,
-                deviationPrice: DEVIATION_PRICE,
+                fee: process.env.FEE,
+                deviationPrice: process.env.DEVIATION_PRICE,
                 host: sellExchange.host,
                 port: sellExchange.port,
             };
@@ -262,11 +269,12 @@ export class Parser {
                 exchange: buyExchange.exchange,
                 price: buyPrice,
                 volume: 1,
-                deviationPrice: DEVIATION_PRICE,
+                fee: process.env.FEE,
+                deviationPrice: process.env.DEVIATION_PRICE,
                 host: buyExchange.host,
                 port: buyExchange.port,
             };
-            if (currentVolume === 0) {
+            if (currentVolume === 0 && sellerOrder && buyerOrder) {
                 ordersBot = Object.assign({ seller: sellerOrder }, { buyer: buyerOrder });
                 console.log(`pair ${sellExchange.pair} sell: ${ordersBot.seller.exchange} ${ordersBot.seller.price} buy: ${ordersBot.buyer.exchange} ${ordersBot.buyer.price}  spread: ${marketSpread}%`);
             } if (currentVolume > 0) {
@@ -299,7 +307,7 @@ export class Parser {
         }
     }
     getMaxBid(arr) {
-        var len = arr.length, max = -Infinity;
+        let len = arr.length, max = -Infinity;
         while (len--) {
             if (Number(arr[len].bid) > max) {
                 max = Number(arr[len].bid);
@@ -308,7 +316,7 @@ export class Parser {
         return max;
     }
     getMinAsk(arr) {
-        var len = arr.length, min = Infinity;
+        let len = arr.length, min = Infinity;
         while (len--) {
             if (Number(arr[len].ask) < min) {
                 min = Number(arr[len].ask);
