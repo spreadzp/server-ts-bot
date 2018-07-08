@@ -7,13 +7,15 @@ import { OrderBookService } from 'db/orderBook/orderBook.service';
 import { OrderService } from 'db/order/order.service';
 import { IDataExchange } from './../common/models/dataExchange';
 import { Component, Controller } from '@nestjs/common';
+import { ClientTcp } from './client-tcp';
 const auth = new net.Auth('secretxxx');
-let client = null;
+//let client = null;
 
 @Controller()
 export class ServerTcpBot {
     server: any;
     parser: Parser;
+    clientsTcp: ClientTcp[] = [];
 
     constructor(
         private readonly orderBooksService: OrderBookService,
@@ -60,12 +62,13 @@ export class ServerTcpBot {
     }
 
     createClient(clientSocket) {
-        client = new net.Client();
-        // Enable authentication for client
-        /* client.getSignature = () => {
+        const newClientTcp = new net.Client();
+        this.clientsTcp.push({ socket: clientSocket, client: newClientTcp });
+        newClientTcp.getSignature = () => {
             return auth.sign({ id: 'clientIdxxx' });
-        }, */
-        client.connect(clientSocket);
+        };
+        newClientTcp.connect(clientSocket);
+        return newClientTcp;
     }
 
     sendOrdersToBot(orders) {
@@ -108,22 +111,32 @@ export class ServerTcpBot {
         try {
             if (order.host && order.serverPort) {
                 const clientSocket = `tcp://${order.host}:${order.serverPort}`;
-                if (!client) {
-                    this.createClient(clientSocket);
+                let currentClient = this.defineTcpClient(clientSocket);
+                if (!currentClient) {
+                    currentClient = this.createClient(clientSocket);
                 }
-                client.on('error', (err) => {
+                currentClient.on('error', (err) => {
                     //console.log('err.trace :', err);
                     if (err.code === 'ETIMEDOUT') {
-                        client.destroy();
+                        currentClient.destroy();
                     }
-                    client.reconnect();
+                    currentClient.reconnect();
                 });
-                client.reconnect();
+                //client.reconnect();
                 const stringOrder = JSON.stringify(order.order);
-                client.notification('sendOrder', [`${stringOrder}`]);
+                currentClient.notification('sendOrder', [`${stringOrder}`]);
             }
         } catch (e) {
             console.log('err :', e);
+        }
+    }
+    defineTcpClient(socketTcp): any {
+        if (this.clientsTcp) {
+            for (const iterator of this.clientsTcp) {
+                if (iterator.socket === socketTcp) {
+                    return iterator.client;
+                }
+            }
         }
     }
 
