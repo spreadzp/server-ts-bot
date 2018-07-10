@@ -1,15 +1,13 @@
-import { ServerTcpController } from './server.controller';
 import * as net from 'toa-net';
 import * as uniqid from 'uniqid';
-import { Model } from 'mongoose';
 import { Parser } from './parser';
 import { OrderBookService } from 'db/orderBook/orderBook.service';
 import { OrderService } from 'db/order/order.service';
 import { IDataExchange } from './../common/models/dataExchange';
-import { Component, Controller } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { ClientTcp } from './client-tcp';
+import { TradeService } from 'db/trade/trade.service';
 const auth = new net.Auth('secretxxx');
-//let client = null;
 
 @Controller()
 export class ServerTcpBot {
@@ -19,7 +17,8 @@ export class ServerTcpBot {
 
     constructor(
         private readonly orderBooksService: OrderBookService,
-        private readonly orderService: OrderService) {
+        private readonly orderService: OrderService,
+        private readonly tradeService: TradeService) {
         this.parser = new Parser(this.orderBooksService);
     }
 
@@ -32,6 +31,15 @@ export class ServerTcpBot {
                     const orders = this.parser.makeOrders();
                     if (orders) {
                         this.sendOrdersToBot(orders);
+                    }
+                }
+                if (message.type === 'notification' && message.payload.method === 'trades') {
+                    const trades = this.parser.parseTrades(message); 
+                    if (trades.length) {
+                        console.log('trades.length :', trades.length);
+                        for (const trade of trades) {
+                            this.tradeService.addNewData(trade);
+                        }
                     }
                 }
                 if (message.type === 'request') {
@@ -74,7 +82,6 @@ export class ServerTcpBot {
     sendOrdersToBot(orders) {
         if (orders) {
             const arbitrageUnicId = uniqid();
-            //console.log('arbitrageId :', arbitrageId);
 
             if (orders.seller !== undefined && orders.seller.volume !== 0 && orders.seller.price !== 0) {
                 const parametersSellOrder = {
@@ -116,13 +123,11 @@ export class ServerTcpBot {
                     currentClient = this.createClient(clientSocket);
                 }
                 currentClient.on('error', (err) => {
-                    //console.log('err.trace :', err);
                     if (err.code === 'ETIMEDOUT') {
                         currentClient.destroy();
                     }
                     currentClient.reconnect();
                 });
-                //client.reconnect();
                 const stringOrder = JSON.stringify(order.order);
                 currentClient.notification('sendOrder', [`${stringOrder}`]);
             }

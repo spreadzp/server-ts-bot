@@ -1,11 +1,9 @@
-export class OrderDto {
+export class TradeDto {
     readonly exchange: string;
     readonly pair: string;
     readonly price: number;
     readonly volume: number;
     readonly typeOrder: string;
-    readonly fee: number;
-    readonly deviationPrice: number;
-    readonly arbitrageId: string;
+    readonly idOrder: string;
     readonly time: string;
   }

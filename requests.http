@@ -2,14 +2,9 @@ GET https://forex.1forge.com/1.0.3/quotes?pairs=EURUSD,GBPJPY,AUDUSD&api_key=bfB
 
 GET https://forex.1forge.com/1.0.3/quota?api_key=bfBuXo30skEAA0ES4Wz3lNQksUjcTuce
 
-GET https://forex.1forge.com/1.0.3/symbols?api_key=bfBuXo30skEAA0ES4Wz3lNQksUjcTuce
-
-
+GET https://forex.1forge.com/1.0.3/symbols?api_key=bfBuXo30skEAA0ES4Wz3lNQksUjcTuce 
 
 google-chrome --remote-debugging-port=9222
-
-
-
 
 Get http://localhost:3000/orderBooks/all
 
@@ -34,6 +29,8 @@ Get https://dev.gateway.proximax.io/node/info
 
 Get http://localhost:3000/orders/all
 Get http://localhost:3000/orders/find/?startDate=1530738000000&endDate=1530910800000
+Get http://localhost:3000/trades/find/?startDate=1531147708186&endDate=1531147708207
+Get http://localhost:3000/trades/all
 POST http://localhost:3000/orderBooks/create HTTP/1.1
 content-type: application/json
 

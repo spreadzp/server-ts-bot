@@ -1,13 +1,13 @@
 import { OrderBook } from './../common/models/orderBook';
 import { OrderBookService } from 'db/orderBook/orderBook.service';
-import { Component, Controller } from '@nestjs/common'; 
-import { IDataExchange } from './../common/models/dataExchange'; 
+import { Component, Controller } from '@nestjs/common';
+import { IDataExchange } from './../common/models/dataExchange';
 import * as dotenv from 'dotenv';
+import { Trade } from 'common/models/trade';
 dotenv.config();
 const cTable = require('console.table');
 const emoji = require('node-emoji');
-const logger = require('./winston')
-const forexLoader = require('./forex-loader'); 
+const forexLoader = require('./forex-loader');
 
 const orderBooks = {};
 let result;
@@ -32,17 +32,17 @@ export class Parser {
         }
     }
     parseTcpMessage(data) {
-        let exchangePair = data.payload.method.split(' ');
-        let orderBook = data.payload.params[0];
-        let host = data.payload.params[1];
-        let port = data.payload.params[2];
+        const exchangePair = data.payload.method.split(' ');
+        const orderBook = data.payload.params[0];
+        const host = data.payload.params[1];
+        const port = data.payload.params[2];
         this.parseMessage(exchangePair, orderBook, host, port);
     }
     parseData(data) {
-        let exchangePair = data.exchange.split(' ');
-        let orderBook = data.orderBook;
-        let host = data.host;
-        let port = data.port;
+        const exchangePair = data.exchange.split(' ');
+        const orderBook = data.orderBook;
+        const host = data.host;
+        const port = data.port;
         this.parseMessage(exchangePair, orderBook, host, port);
     }
     parseSentOrder(data) {
@@ -78,7 +78,7 @@ export class Parser {
                         asks: asks,
                         currentStatus: 4,
                         host: host,
-                        port: port
+                        port: port,
                     },
                 ];
             }
@@ -119,7 +119,7 @@ export class Parser {
                             asks: asks,
                             currentStatus: 4,
                             host: host,
-                            port: port
+                            port: port,
                         },
                     );
                 }
@@ -258,7 +258,7 @@ export class Parser {
                 pair: sellExchange.pair,
                 exchange: sellExchange.exchange,
                 price: sellPrice,
-                volume: 1,
+                volume: process.env.TRADE_VOLUME,
                 fee: process.env.FEE,
                 deviationPrice: process.env.DEVIATION_PRICE,
                 host: sellExchange.host,
@@ -268,7 +268,7 @@ export class Parser {
                 pair: buyExchange.pair,
                 exchange: buyExchange.exchange,
                 price: buyPrice,
-                volume: 1,
+                volume: process.env.TRADE_VOLUME,
                 fee: process.env.FEE,
                 deviationPrice: process.env.DEVIATION_PRICE,
                 host: buyExchange.host,
@@ -298,6 +298,20 @@ export class Parser {
             console.log(`from ${data.exchange} old data ${data.pair}, try reconnect ${data.host}:${data.port} ${emoji.get('exclamation')}`);
             return true;
         }
+    }
+    parseTrades(newTrades): Trade[] {
+        const trades: Trade[] = [];
+        //const exchangePair = newTrades.payload.method.split(' ');
+        const tradedOrders = newTrades.payload.params[0]; 
+        const host = newTrades.payload.params[1];
+        const port = newTrades.payload.params[2];
+        if (tradedOrders.length) {
+            for (const trade of tradedOrders) {
+                console.log('trade :', trade);
+                trades.push(trade);
+            }
+        }
+        return trades;
     }
     checkConnectedExchanges(data) {
         if (data.status) {

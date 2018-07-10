@@ -1,16 +1,18 @@
 import { OrderBookService } from './../db/orderBook/orderBook.service';
-import { ServerTcpBot } from './server';
+import { ServerTcpBot } from './server-tcp';
 import { Controller, Get, Post, Body, Param, HttpStatus, Res } from '@nestjs/common';
-import { OrderBook } from 'common/models/orderBook';
 import { OrderService } from './../db/order/order.service';
+import { TradeService } from './../db/trade/trade.service';
 
 @Controller('sever-tcp')
 export class ServerTcpController {
     setverTcp: ServerTcpBot;
     constructor(
         private readonly orderBooksService: OrderBookService,
-        private readonly orderService: OrderService) {
-        this.setverTcp = new ServerTcpBot(this.orderBooksService, this.orderService);
+        private readonly orderService: OrderService,
+        private readonly tradeService: TradeService,
+    ) {
+        this.setverTcp = new ServerTcpBot(this.orderBooksService, this.orderService, this.tradeService );
     }
     /*  @Get('save')
      async saveNew(data: OrderBook) {

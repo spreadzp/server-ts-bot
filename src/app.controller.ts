@@ -1,6 +1,6 @@
 import { Get, Controller } from '@nestjs/common';
 import { AppService } from './app.service';
-import { ServerTcpBot } from './server/server';
+import { ServerTcpBot } from './server/server-tcp';
 
 @Controller()
 export class AppController {
