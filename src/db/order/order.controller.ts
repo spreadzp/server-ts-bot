@@ -22,7 +22,7 @@ export class OrderController {
   @Get('find/')
   async getOrderByPeriod(@Request() req): Promise<Order[]> {
     const orders = await this.ordersService.getOrderByPeriod(req.query.startDate, req.query.endDate);
-    console.log(orders);
+    //console.log(orders);
     return orders;
   }
 

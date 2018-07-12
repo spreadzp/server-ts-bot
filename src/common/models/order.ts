@@ -10,4 +10,7 @@ export class Order extends Document{
     readonly arbitrageId: string;
     readonly deviationPrice: number;
     readonly time: string;
+    readonly host: string;
+    readonly port: number;
+    readonly statusOrder: string;
 }

@@ -22,7 +22,7 @@ export class OrderBookController {
   @Get('order-books/')
   async getOrderBookByPeriod(@Request() req): Promise<OrderBook[]> {
     const orderBooks = await this.orderBooksService.getOrderBookByPeriod(req.query.startDate, req.query.endDate);
-    console.log(orderBooks);
+    //console.log(orderBooks);
     return orderBooks;
   }
 

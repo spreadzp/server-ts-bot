@@ -7,5 +7,6 @@ export const TradeSchema = new mongoose.Schema({
     volume: Number,
     typeOrder: String,
     idOrder: String,
+    exchOrderId: String,
     time: String,
 });

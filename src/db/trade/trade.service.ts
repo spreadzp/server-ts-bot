@@ -25,8 +25,8 @@ export class TradeService {
   async getTradeByPeriod(startDate: number, endDate: number): Promise<Trade[]> {
     return await this.tradeModel.find({ time: { $gte: startDate, $lt: endDate } },
       {
-        _id: 0, exchange: 1, pair: 1, price: 1, volume: 1, typeTrade: 1, fee: 1,
-        arbitrageId: 1, deviationPrice: 1, time: 1,
+        _id: 0, exchange: 1, pair: 1, price: 1, volume: 1, typeOrder: 1, idOrder: 1,
+        exchOrderId: 1, time: 1,
       }).exec();
   }
 }

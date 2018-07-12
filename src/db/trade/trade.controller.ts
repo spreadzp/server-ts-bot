@@ -22,7 +22,7 @@ export class TradeController {
     @Get('find/')
     async getTradeByPeriod(@Request() req): Promise<Trade[]> {
         const trades = await this.tradesService.getTradeByPeriod(req.query.startDate, req.query.endDate);
-        console.log(trades);
+        //console.log(trades);
         return trades;
     }
 

@@ -7,5 +7,6 @@ export interface Trade extends Document {
     volume: number;
     typeOrder: string;
     idOrder: string;
+    exchOrderId: string;
     time: string;
 }

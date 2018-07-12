@@ -25,7 +25,7 @@ export class OrderService {
   async getOrderByPeriod(startDate: number, endDate: number): Promise<Order[]> {
     return await this.orderModel.find({ time: { $gte: startDate, $lt: endDate } },
       {
-        _id: 0, exchange: 1, pair: 1, price: 1, volume: 1, typeOrder: 1, fee: 1,
+        _id: 0, exchange: 1, pair: 1, price: 1, volume: 1, typeOrder: 1, statusOrder: 1, fee: 1,
         arbitrageId: 1, deviationPrice: 1, time: 1,
       }).exec();
   }

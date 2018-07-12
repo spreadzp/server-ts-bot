@@ -10,4 +10,6 @@ export const OrderSchema = new mongoose.Schema({
     arbitrageId: String,
     deviationPrice: Number,
     time: String,
+    host: String,
+    port: Number,
 });

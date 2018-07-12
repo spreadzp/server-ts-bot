@@ -5,5 +5,6 @@ export class TradeDto {
     readonly volume: number;
     readonly typeOrder: string;
     readonly idOrder: string;
+    readonly exchOrderId: string;
     readonly time: string;
   }
